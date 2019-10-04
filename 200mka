@@ -1,0 +1,157 @@
+
+struct Point{
+    ll x, y;
+};
+
+struct Vector {
+    ll x, y;
+    Vector(Point A, Point B){
+        x = B.x - A.x;
+        y = B.y - A.y;
+    }
+};
+
+
+/*bool cmp(const Point &A, const Point &B){
+    if(A.x == B.x){
+        return A.y < B.y;
+    }
+    return A.x < B.x;
+}*/
+bool operator <(Point const & A, Point const & B)
+{
+    if(A.x == B.x){
+        return A.y < B.y;
+    }
+    return A.x < B.x;
+}
+
+bool operator ==(Point const & A, Point const & B)
+{
+    if(A.x == B.x && A.y == B.y)
+        return true;
+    return false;
+}
+
+
+struct otr{
+    Point beg, end;
+    otr(Point A, Point B){
+        beg = A, end = B;
+        if(A < B)
+            swap(beg, end);
+    }
+};
+
+ll CrossProduct(Vector a, Vector b){
+    return a.x*b.y - a.y*b.x;
+}
+
+ll DotProduct(Vector a, Vector b){
+    return a.x*b.x + a.y*b.y;
+}
+
+ll DoubleS(Point P1, Point P2, Point P3){
+    Vector P1P2(P1, P2);
+    Vector P1P3(P1, P3);
+    return CrossProduct(P1P2, P1P3);
+}
+
+bool chas(Point P1, Point P2, Point P3){
+    return DoubleS(P1, P2, P3) < 0;
+}
+
+bool notchas(Point P1, Point P2, Point P3){
+    return DoubleS(P1, P2, P3) > 0;
+}
+
+ld Dist(Point A, Point B){
+    return sqrt(ld((A.x - B.x)*(A.x - B.x) + (A.y - B.y)*(A.y - B.y)));
+}
+
+
+ld MinDist(Point A, Point B, Point C){
+    // расстояние от С до АВ
+    Vector AC = Vector(A, C), BC = Vector(B, C), AB = Vector(A, B), BA = Vector(B, A);
+    if(CrossProduct(BC, BA) == 0){
+        if(C.x <= max(A.x, B.x) && C.x >= min(A.x, B.x) && C.y <= max(A.y, B.y) && C.y >= min(A.y, B.y)){
+            return 0;
+        }
+        else
+            return min(Dist(A,C) , Dist(B, C));
+    }
+    if(DotProduct(AC, AB) < 0){
+        return Dist(A, C);
+    }
+    else if(DotProduct(BC, BA) < 0){
+        return Dist(B, C);
+    }
+    ld a = Dist(A, B), b =Dist(B, C), c =Dist(C, A);
+    ld S = abs(CrossProduct(AB, AC));
+    ld h =S/a;
+    return h;
+}
+
+bool Intersect(otr a, otr b){
+    // DotProduct*DotProduc ПОРЯДКА x^4!!!!!
+    Point A = a.beg, B = a.end, C = b.beg, D = b.end;
+    if(!(DotProduct(Vector(A,B), Vector(A,C)) *  DotProduct(Vector(A,B), Vector(A,D)) <= 0 &&
+       DotProduct(Vector(C,D), Vector(C,A)) *  DotProduct(Vector(C,D), Vector(C,B)) <= 0))
+        return false;
+    if(DotProduct(Vector(A,B), Vector(A,C)) == 0 && DotProduct(Vector(A,B), Vector(A,D)) == 0 &&  DotProduct(Vector(C,D), Vector(C,A)) == 0 && DotProduct(Vector(C,D), Vector(C,B)) == 0){
+        // Все точки на одной прямой
+        Point BegPoint= max(a.beg, b.beg), EndPoint = min(a.end, b.end);
+        if(BegPoint < EndPoint){
+            return true;
+            // пересечение по отрезку [BegPoint, EndPoint]
+        }
+        if(BegPoint == EndPoint){
+            // пересекаютсф в 1 точке
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+
+
+int main()
+{
+#ifdef DEBUG
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+#endif
+    int n;
+    cin >> n;
+    vec<Point> arr(n);
+    for0(i, n){
+        cin >> arr[i].x >> arr[i].y;
+    }
+    sort(arr.begin(), arr.end());
+    Point p1 = arr[0];
+    Point p2 = arr.back();
+    vec<Point> up;
+    vec<Point> down;
+    up.push_back(p1);
+    down.push_back(p1);
+    for(int i = 1; i < n; i++){
+        if(i == n - 1 || chas(p1, arr[i], p2)){
+            while(up.size() != 1 && !chas(up[up.size() -2], up[up.size() -1], arr[i]))
+                up.pop_back();
+            up.push_back(arr[i]);
+        }
+        if(i == n -1 || notchas(p1, arr[i], p2)){
+            while(down.size() != 1 && !notchas(down[down.size() -2], down[down.size() -1], arr[i]))
+                down.pop_back();
+            down.push_back(arr[i]);
+        }
+    }
+    
+    vec<Point> ConvexHull;
+    for(int i = 0; i < up.size(); i++)
+        ConvexHull.push_back(up[i]);
+    for (size_t i=down.size()-2; i>0; --i)
+        ConvexHull.push_back (down[i]);
+}
+
